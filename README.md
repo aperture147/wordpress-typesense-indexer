@@ -89,4 +89,4 @@ Code này chỉ blackbox reverse engineering kết quả đầu ra và database 
 
 ## TODO
 - Better CLI
-- Create permalink base on `wp_options`.`option_name='permalink_structure'`. Currently permalink is hard-coded to structure which is equivalent to `%category%/%postname%/%author`
+- Create permalink base on `wp_options.option_name='permalink_structure'`. Currently permalink is hard-coded to structure which is equivalent to `%category%/%postname%/%author`
