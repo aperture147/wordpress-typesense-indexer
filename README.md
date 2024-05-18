@@ -16,6 +16,12 @@ Index bài viết trong Wordpress vào Typesense một cách nhanh chóng mà kh
 
 ## HDSD
 
+### Yêu cầu môi trường:
+- UNIX/Linux (đã test trên macOS Sonoma 14.5)
+- Python 3.x (đã test trên Python 3.9)
+- MySQL/MariaDB (đã test trên MariaDB 10.5.24)
+- Typesense (đã test trên Typesense v26.0)
+
 ### Chuẩn bị môi trường
 
 1. Copy file `config.template.ini` ra thành `config.ini`:
