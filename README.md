@@ -1,6 +1,6 @@
 # Typesense Wordpress Indexer
 
-Index bài viết trong Wordpress vào Typesense một cách nhanh chóng mà không phải dùng qua plugin mặc định của Typesense rất chậm chạp mà không có checkpoint để recover giữa chừng
+Index bài viết trong Wordpress vào Typesense một cách nhanh chóng mà không phải index qua plugin [Search with Typesense](https://wordpress.org/plugins/search-with-typesense/) rất chậm chạp mà không có checkpoint để recover giữa chừng.
 
 ## Các nội dung được index:
 
@@ -83,3 +83,10 @@ python indexer.py
 
 1. Checkpoint chỉ hoạt động đúng nếu file `ids.txt` không thay đổi.
 2. Trong trường hợp chết giữa chừng, chỉ cần chạy lại lệnh như mục 3 ở mục trên.
+
+## Giới hạn
+Code này chỉ blackbox reverse engineering kết quả đầu ra và database đầu vào, kèm theo code có sẵn của Wordpress và plugin [Search with Typesense](https://wordpress.org/plugins/search-with-typesense/) mà không biết config của server và các nội dung được index thêm của các plugin khác, nên kết quả thực tế khi index qua plugin [Search with Typesense](https://wordpress.org/plugins/search-with-typesense/) có thể sẽ khác so với kết quả của code này.
+
+## TODO
+- Better CLI
+- Create permalink base on `wp_options`.`option_name='permalink_structure'`. Currently permalink is hard-coded to structure which is equivalent to `%category%/%postname%/%author`
