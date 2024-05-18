@@ -7,7 +7,7 @@ import csv
 import math
 from time import perf_counter, sleep, time
 from datetime import datetime
-
+import html
 CHECKPOINT_FILE = 'checkpoint.txt'
 CHUNK_SIZE = 3000
 config = ConfigParser()
@@ -126,9 +126,9 @@ def index_new_posts(post_id_chunk: list):
         
         if thumb_meta_str:
             thumb_meta = loads(thumb_meta_str.encode(), decode_strings=True)
-            thumb_html = f"<img width=\"{thumb_meta.get('width', 480)}\" height=\"{thumb_meta.get('height', 480)}\" src=\"{thumb_url}\" class=\"ais-Hit-itemImage\" alt=\"{post_title}\" decoding=\"async\" loading=\"lazy\" />"
+            thumb_html = f"<img width=\"{thumb_meta.get('width', 480)}\" height=\"{thumb_meta.get('height', 480)}\" src=\"{thumb_url}\" class=\"ais-Hit-itemImage\" alt=\"{html.escape(post_title)}\" decoding=\"async\" loading=\"lazy\" />"
         else:
-            thumb_html = f"<img width=\"480\" height=\"480\" src=\"{thumb_url}\" class=\"ais-Hit-itemImage\" alt=\"{post_title}\" decoding=\"async\" loading=\"lazy\" />"
+            thumb_html = f"<img width=\"480\" height=\"480\" src=\"{thumb_url}\" class=\"ais-Hit-itemImage\" alt=\"{html.escape(post_title)}\" decoding=\"async\" loading=\"lazy\" />"
 
         if not isinstance(post_date, datetime):
             post_date = datetime.now()
@@ -165,7 +165,7 @@ def get_post_id():
     with open('data.csv') as csv_f:
         reader = csv.reader(csv_f)
         next(reader, None)
-        return [*set(post_id for post_id, *_ in reader)]
+        return [post_id.strip() for post_id, *_ in reader if post_id.strip()]
 
 def get_post_id2():
     with open('ids.txt') as id_f:
@@ -203,7 +203,7 @@ def main():
         write_checkpoint(i)
         print('sleep 0.5 second')
         sleep(0.5)
-    end_time = start_time()
+    end_time = time()
     if os.path.isfile(CHECKPOINT_FILE):
         os.remove(CHECKPOINT_FILE)
     print('total elapsed time', end_time - start_time, 'seconds')
