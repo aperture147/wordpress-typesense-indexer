@@ -78,63 +78,65 @@ def get_new_posts(post_id_chunk: list):
 
         post_list = cur.fetchall()
 
-        typesense_list = []
-        for id, comment_count, post_author, \
-            post_content, post_date, post_excerpt, \
-            post_modified, post_title, post_type, \
-            thumb_url, thumb_meta_str in post_list:
-            post_taxonomy = post_taxonomy[id]
-            
-            category = []
-            cat_link = []
-            category_tax_id_list = post_taxonomy.get('category', [])
-            permalink = ''
-            for tax_id in category_tax_id_list:
-                cat_link_part = []
-                parent_id = 69 # init
-                while parent_id:
-                    term_name, term_slug, _, parent_id = taxonomy_dict[tax_id]
-                    category.append(term_name)
-                    cat_link_part.append(term_slug)
-                if cat_link_part:
-                    cat_link_part.reverse()
-                    cat_link.append(os.path.join(wordpress_host, 'category', *cat_link_part))
-                    permalink = os.path.join(wordpress_host, *cat_link_part, post_author)
-
-            tag = []
-            tag_link = []
-            tag_tax_id_list = post_taxonomy.get('post_tag', [])
-            for tax_id in tag_tax_id_list:
+    typesense_list = []
+    for id, comment_count, post_author, \
+        post_content, post_date, post_excerpt, \
+        post_modified, post_title, post_type, \
+        thumb_url, thumb_meta_str in post_list:
+        post_taxonomy = post_taxonomy[id]
+        
+        category = []
+        cat_link = []
+        category_tax_id_list = post_taxonomy.get('category', [])
+        permalink = ''
+        for tax_id in category_tax_id_list:
+            cat_link_part = []
+            parent_id = 69 # init
+            while parent_id:
                 term_name, term_slug, _, parent_id = taxonomy_dict[tax_id]
-                tag.append(term_name)
-                tag_link.append(os.path.join(wordpress_host, 'tag', term_slug))
+                category.append(term_name)
+                cat_link_part.append(term_slug)
+            if cat_link_part:
+                cat_link_part.reverse()
+                cat_link.append(os.path.join(wordpress_host, 'category', *cat_link_part))
+                permalink = os.path.join(wordpress_host, *cat_link_part, post_author)
 
-            thumb_meta = loads(thumb_meta_str.encode(), decode_strings=True)
-            thumb_html = f"<img width=\"{thumb_meta['width']}\" height=\"{thumb_meta['height']}\" src=\"{thumb_url}\" class=\"ais-Hit-itemImage\" alt=\"{post_title}\" decoding=\"async\" loading=\"lazy\" />"
-            typesense_data = {
-                "id": str(id),
-                "comment_count": comment_count,
-                "is_sticky": 0, # what is this?
-                "permalink": permalink,
-                "post_author": post_author, 
-                "post_content": post_content,
-                "post_date": str(post_date.date()),
-                "post_excerpt": post_excerpt,
-                "post_id": str(id),
-                "post_modified": str(post_modified),
-                "post_thumbnail": thumb_url,
-                "post_thumbnail_html": thumb_html,
-                "post_title": post_title,
-                "post_type": post_type,
-                "sort_by_date": int(post_date.timestamp()),
-                "tag_links": tag_link,
-                "tags": tag,
-                "cat_link": cat_link,
-                "category": category
-            }
-            typesense_list.append(typesense_data)
-        with open('result.json', 'w') as f:
-            json.dump(typesense_list, f)
+        tag = []
+        tag_link = []
+        tag_tax_id_list = post_taxonomy.get('post_tag', [])
+        for tax_id in tag_tax_id_list:
+            term_name, term_slug, _, parent_id = taxonomy_dict[tax_id]
+            tag.append(term_name)
+            tag_link.append(os.path.join(wordpress_host, 'tag', term_slug))
+
+        thumb_meta = loads(thumb_meta_str.encode(), decode_strings=True)
+        thumb_html = f"<img width=\"{thumb_meta['width']}\" height=\"{thumb_meta['height']}\" src=\"{thumb_url}\" class=\"ais-Hit-itemImage\" alt=\"{post_title}\" decoding=\"async\" loading=\"lazy\" />"
+        typesense_data = {
+            "id": str(id),
+            "comment_count": comment_count,
+            "is_sticky": 0, # what is this?
+            "permalink": permalink,
+            "post_author": post_author, 
+            "post_content": post_content,
+            "post_date": str(post_date.date()),
+            "post_excerpt": post_excerpt,
+            "post_id": str(id),
+            "post_modified": str(post_modified),
+            "post_thumbnail": thumb_url,
+            "post_thumbnail_html": thumb_html,
+            "post_title": post_title,
+            "post_type": post_type,
+            "sort_by_date": int(post_date.timestamp()),
+            "tag_links": tag_link,
+            "tags": tag,
+            "cat_link": cat_link,
+            "category": category
+        }
+        typesense_list.append(typesense_data)
+    with open('result.json', 'w') as f:
+        json.dump(typesense_list, f)
+
+    typesense_client.collections['post'].documents.import_(typesense_list, {'action': 'upsert'})
 
 def main():
     get_new_posts([1956456, 1956454, 1956451, 1956449, 1956447])
