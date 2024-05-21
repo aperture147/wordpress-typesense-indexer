@@ -75,7 +75,8 @@ def index_new_posts(post_id_chunk: list):
             SELECT DISTINCT
                 p.id, p.comment_count, u.user_nicename, p.post_content,
                 p.post_date, p.post_excerpt, p.post_modified, p.post_title,
-                p.post_type, p_thumb.guid, p_thumb_m.meta_value, p_category_m.meta_value, p.guid, p.post_name
+                p.post_type, p_thumb.guid, p_thumb_m.meta_value,
+                p_category_m.meta_value, p.guid, p.post_name
             FROM wp0e_posts AS p
             LEFT JOIN wp0e_postmeta AS pm ON pm.post_id = p.ID AND pm.meta_key = '_thumbnail_id'
             LEFT JOIN wp0e_postmeta AS p_category_m ON p_category_m.post_id = p.ID AND p_category_m.meta_key = '_primary_term_category'
@@ -114,7 +115,7 @@ def index_new_posts(post_id_chunk: list):
             if cat_link_part:
                 cat_link_part.reverse()
                 cat_link.append(os.path.join(wordpress_host, 'category', *cat_link_part))
-                permalink = os.path.join(wordpress_host, *cat_link_part, post_name, post_author)
+                # permalink = os.path.join(wordpress_host, *cat_link_part, post_name, post_author)
         
         tag = []
         tag_link = []
