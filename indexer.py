@@ -76,7 +76,7 @@ def index_new_posts(post_id_chunk: list):
                 p.id, p.comment_count, u.user_nicename, p.post_content,
                 p.post_date, p.post_excerpt, p.post_modified, p.post_title,
                 p.post_type, p_thumb.guid, p_thumb_m.meta_value,
-                p_category_m.meta_value, p.guid, p.post_name
+                p_category_m.meta_value
             FROM wp0e_posts AS p
             LEFT JOIN wp0e_postmeta AS pm ON pm.post_id = p.ID AND pm.meta_key = '_thumbnail_id'
             LEFT JOIN wp0e_postmeta AS p_category_m ON p_category_m.post_id = p.ID AND p_category_m.meta_key = '_primary_term_category'
@@ -92,7 +92,7 @@ def index_new_posts(post_id_chunk: list):
     for id, comment_count, post_author, \
         post_content, post_date, post_excerpt, \
         post_modified, post_title, post_type, \
-        thumb_url, thumb_meta_str, category_id_str, post_link, post_name in post_list:
+        thumb_url, thumb_meta_str, category_id_str in post_list:
         print('processing post', id)
         current_post_taxonomy = post_taxonomy_dict[id]
         if category_id_str:
