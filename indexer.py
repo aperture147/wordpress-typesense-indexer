@@ -103,7 +103,7 @@ def index_new_posts(post_id_chunk: list):
         category = []
         cat_link = []
         
-        permalink = wordpress_host + f"?q={id}"
+        permalink = wordpress_host + f"?p={id}"
 
         cat_link_part = []
         if category_id:
