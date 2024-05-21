@@ -191,7 +191,7 @@ def write_checkpoint(last_chunk):
 def main():
     start_time = time()
     post_id_list = get_post_id2()
-    
+    print('total posts', len(post_id_list))
     chunk_count = math.ceil(len(post_id_list) / CHUNK_SIZE)
     print('total chunk', chunk_count)
     last_chunk = read_checkpoint()
