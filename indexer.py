@@ -103,7 +103,7 @@ def index_new_posts(post_id_chunk: list):
         category = []
         cat_link = []
         
-        permalink = post_link
+        permalink = wordpress_host + f"?q={id}"
 
         cat_link_part = []
         if category_id:
@@ -137,6 +137,7 @@ def index_new_posts(post_id_chunk: list):
         if not isinstance(post_modified, datetime):
             post_modified = datetime.now()
             print('malformed post modified, set to current time')
+        print('permalink', permalink)
         typesense_data = {
             "id": str(id),
             "comment_count": comment_count,
