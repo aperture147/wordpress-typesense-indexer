@@ -8,6 +8,19 @@ import math
 from time import perf_counter, sleep, time
 from datetime import datetime
 import html
+import argparse
+import shutil
+
+parser = argparse.ArgumentParser(
+    prog='Typesense Wordpress Indexer',
+    description='Index Posts from Wordpress'
+)
+parser.add_argument('--reindex', action='store_true',
+                    help='reindex all posts')
+args = parser.parse_args()
+reindex = args.reindex
+
+IDS_FILE = 'ids.txt'
 CHECKPOINT_FILE = 'checkpoint.txt'
 CHUNK_SIZE = 3000
 config = ConfigParser()
@@ -170,7 +183,7 @@ def get_post_id():
         return [post_id.strip() for post_id, *_ in reader if post_id.strip()]
 
 def get_post_id2():
-    with open('ids.txt') as id_f:
+    with open(IDS_FILE) as id_f:
         return [post_id.strip() for post_id in id_f.readlines() if post_id]
 
 def read_checkpoint():
@@ -187,10 +200,35 @@ def read_checkpoint():
 def write_checkpoint(last_chunk):
     with open(CHECKPOINT_FILE, 'w') as ckpt_f:
         ckpt_f.write(str(last_chunk))
+
+def get_all_posts_from_db():
     
+    with db_conn.cursor() as cur:
+        cur.execute('''
+            SELECT id FROM wp0e_posts
+            WHERE post_status = 'publish' AND post_type = 'post'
+        ''')
+        result = cur.fetchall()
+    now = int(time())
+    if os.path.isfile(IDS_FILE):
+        shutil.copy(IDS_FILE, f'ids-backup-{now}.txt')
+        os.remove(IDS_FILE)
+    if os.path.isfile(CHECKPOINT_FILE):
+        shutil.copy(CHECKPOINT_FILE, f'checkpoint-backup-{now}.txt')
+        os.remove(CHECKPOINT_FILE)
+    # write file for checkpoint
+    with open(IDS_FILE, 'a') as f:
+        for id, in result[:-1]:
+            f.write(f'{id}\n')
+        f.write(f'{result[-1][0]}\n')
+    return [x for x, in result]
+
 def main():
     start_time = time()
-    post_id_list = get_post_id2()
+    if reindex:
+        post_id_list = get_all_posts_from_db()
+    else:
+        post_id_list = get_post_id2()
     print('total posts', len(post_id_list))
     chunk_count = math.ceil(len(post_id_list) / CHUNK_SIZE)
     print('total chunk', chunk_count)
