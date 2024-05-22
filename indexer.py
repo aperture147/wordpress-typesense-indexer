@@ -107,10 +107,11 @@ def index_new_posts(post_id_chunk: list):
         post_modified, post_title, post_type, \
         thumb_url, thumb_meta_str, category_id_str in post_list:
         print('processing post', id)
-        current_post_taxonomy = post_taxonomy_dict[id]
+        current_post_taxonomy = post_taxonomy_dict.get(id)
+        category_id = None
         if category_id_str:
             category_id = int(category_id_str)
-        else:
+        elif current_post_taxonomy:
             category_id = int(current_post_taxonomy.get('category', [0])[0])
 
         category = []
