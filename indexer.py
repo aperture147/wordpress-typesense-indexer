@@ -123,6 +123,8 @@ def index_new_posts(post_id_chunk: list):
         if category_id:
             parent_id = category_id # init
             while parent_id:
+                if parent_id not in taxonomy_dict:
+                    break
                 term_name, term_slug, _, parent_id = taxonomy_dict[parent_id]
                 category.append(term_name)
                 cat_link_part.append(term_slug)
