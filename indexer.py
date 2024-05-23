@@ -176,7 +176,6 @@ def index_new_posts(post_id_chunk: list):
             "category": category
         }
         print(typesense_data)
-        1/0
         typesense_list.append(typesense_data)
     print('pushing to typesense')
     typesense_client.collections['post'].documents.import_(typesense_list, {'action': 'upsert'})
