@@ -109,10 +109,10 @@ def index_new_posts(post_id_chunk: list):
         print('processing post', id)
         current_post_taxonomy = post_taxonomy_dict.get(id)
         category_id = None
-        if category_id_str:
+        if current_post_taxonomy:
+            category_id = int(current_post_taxonomy.get('category', [None])[0])
+        elif category_id_str:
             category_id = int(category_id_str)
-        elif current_post_taxonomy:
-            category_id = int(current_post_taxonomy.get('category', [0])[0])
 
         category = []
         cat_link = []
@@ -175,6 +175,8 @@ def index_new_posts(post_id_chunk: list):
             "cat_link": cat_link,
             "category": category
         }
+        print(typesense_data)
+        1/0
         typesense_list.append(typesense_data)
     print('pushing to typesense')
     typesense_client.collections['post'].documents.import_(typesense_list, {'action': 'upsert'})
