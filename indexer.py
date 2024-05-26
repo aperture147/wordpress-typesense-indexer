@@ -108,34 +108,40 @@ def index_new_posts(post_id_chunk: list):
         thumb_url, thumb_meta_str, category_id_str in post_list:
         print('processing post', id)
         current_post_taxonomy = post_taxonomy_dict.get(id)
-        category_id = None
+        category_id_list = []
         if current_post_taxonomy:
-            category_id = int(current_post_taxonomy.get('category', [None])[0])
-        elif category_id_str:
+            category_id_list = [int(x) for x in current_post_taxonomy.get('category', [])]
+        if category_id_str:
             category_id = int(category_id_str)
+            if category_id not in category_id_list:
+                category_id_list.append(category_id)
 
         category = []
         cat_link = []
         
         permalink = wordpress_host + f"?p={id}"
 
-        cat_link_part = []
-        if category_id:
-            parent_id = category_id # init
-            while parent_id:
-                if parent_id not in taxonomy_dict:
-                    break
-                term_name, term_slug, _, parent_id = taxonomy_dict[parent_id]
-                category.append(term_name)
-                cat_link_part.append(term_slug)
-            if cat_link_part:
-                cat_link_part.reverse()
-                cat_link.append(os.path.join(wordpress_host, 'category', *cat_link_part))
-                # permalink = os.path.join(wordpress_host, *cat_link_part, post_name, post_author)
+        if category_id_list:
+            for category_id in category_id_list:
+                cat_link_part = []
+            
+                parent_id = category_id # init
+                while parent_id:
+                    if parent_id not in taxonomy_dict:
+                        break
+                    term_name, term_slug, _, parent_id = taxonomy_dict[parent_id]
+                    category.append(term_name)
+                    cat_link_part.append(term_slug)
+                if cat_link_part:
+                    cat_link_part.reverse()
+                    cat_link.append(os.path.join(wordpress_host, 'category', *cat_link_part))
+                    # permalink = os.path.join(wordpress_host, *cat_link_part, post_name, post_author)
         
         tag = []
         tag_link = []
         tag_tax_id_list = current_post_taxonomy.get('post_tag', [])
+        print('total categories:', len(category))
+        print('total tags:', len(tag))
         for tax_id in tag_tax_id_list:
             term_name, term_slug, _, parent_id = taxonomy_dict[tax_id]
             tag.append(term_name)
@@ -175,7 +181,6 @@ def index_new_posts(post_id_chunk: list):
             "cat_link": cat_link,
             "category": category
         }
-        print(typesense_data)
         typesense_list.append(typesense_data)
     print('pushing to typesense')
     typesense_client.collections['post'].documents.import_(typesense_list, {'action': 'upsert'})
