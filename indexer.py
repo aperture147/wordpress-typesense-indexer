@@ -41,13 +41,13 @@ db_conn = pymysql.connect(
 )
 print('db connected')
 typesense_client = typesense.Client({
-  'nodes': [{
-    'host': typesense_config['host'],  # For Typesense Cloud use xxx.a1.typesense.net
-    'port': typesense_config['port'],       # For Typesense Cloud use 443
-    'protocol': typesense_config['protocol']   # For Typesense Cloud use https
-  }],
-  'api_key': typesense_config['api_key'],
-  'connection_timeout_seconds': 3600
+    'nodes': [{
+        'host': typesense_config['host'],  # For Typesense Cloud use xxx.a1.typesense.net
+        'port': typesense_config['port'],       # For Typesense Cloud use 443
+        'protocol': typesense_config['protocol']   # For Typesense Cloud use https
+    }],
+    'api_key': typesense_config['api_key'],
+    'connection_timeout_seconds': 3600
 })
 print('typesense client created')
 def index_new_posts(post_id_chunk: list):
