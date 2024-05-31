@@ -210,6 +210,15 @@ def write_checkpoint(last_chunk):
     with open(CHECKPOINT_FILE, 'w') as ckpt_f:
         ckpt_f.write(str(last_chunk))
 
+def backup_id_and_checkpoint():
+    now = int(time())
+    if os.path.isfile(IDS_FILE):
+        shutil.copy(IDS_FILE, f'ids-backup-{now}.txt')
+        os.remove(IDS_FILE)
+    if os.path.isfile(CHECKPOINT_FILE):
+        shutil.copy(CHECKPOINT_FILE, f'checkpoint-backup-{now}.txt')
+        os.remove(CHECKPOINT_FILE)
+
 def get_all_posts_from_db():
     
     with db_conn.cursor() as cur:
@@ -218,18 +227,12 @@ def get_all_posts_from_db():
             WHERE post_status = 'publish' AND post_type = 'post'
         ''')
         result = cur.fetchall()
-    now = int(time())
-    if os.path.isfile(IDS_FILE):
-        shutil.copy(IDS_FILE, f'ids-backup-{now}.txt')
-        os.remove(IDS_FILE)
-    if os.path.isfile(CHECKPOINT_FILE):
-        shutil.copy(CHECKPOINT_FILE, f'checkpoint-backup-{now}.txt')
-        os.remove(CHECKPOINT_FILE)
+    backup_id_and_checkpoint()
     # write file for checkpoint
     with open(IDS_FILE, 'a') as f:
         for id, in result[:-1]:
             f.write(f'{id}\n')
-        f.write(f'{result[-1][0]}\n')
+        f.write(f'{result[-1][0]}')
     return [x for x, in result]
 
 def main():
