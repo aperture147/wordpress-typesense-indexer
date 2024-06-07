@@ -15,8 +15,11 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument('--reindex', action='store_true',
                     help='reindex all posts')
+parser.add_argument('--dryrun', action='store_true',
+                    help='dry run')
 args = parser.parse_args()
 reindex = args.reindex
+dryrun = args.dryrun
 
 IDS_FILE = 'ids.txt'
 CHECKPOINT_FILE = 'checkpoint.txt'
@@ -148,7 +151,7 @@ def index_new_posts(post_id_chunk: list):
         
         thumb_html = f"<img width=\"350\" height=\"350\" src=\"{thumb_url}\" class=\"attachment-woocommerce_thumbnail size-woocommerce_thumbnail\" alt=\"{html.escape(post_title)}\" 0=\"tsfwc-thumbnail_image\" decoding=\"async\" loading=\"lazy\" />"
         add_to_cart_btn = f"<a href=\"?add-to-cart={id}\" data-quantity=\"1\" class=\"button product_type_simple add_to_cart_button ajax_add_to_cart\" data-product_id=\"{id}\" data-product_sku=\"{product_sku}\" aria-label=\"Add to cart: &ldquo;{html.escape(post_title)}&rdquo;\" aria-describedby=\"\" rel=\"nofollow\">Add to cart</a>"
-        price_html = f"<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\">&#36;</span>{"%.2f" % price}</bdi></span>"
+        price_html = f"<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\">&#36;</span>{'%.2f' % price}</bdi></span>"
         if not isinstance(post_date, datetime):
             post_date = datetime.now()
             print('malformed post date, set to current time')
@@ -186,6 +189,8 @@ def index_new_posts(post_id_chunk: list):
             "total_sales": 0 # TODO
         }
         typesense_list.append(typesense_data)
+    if dryrun:
+        return
     print('pushing to typesense')
     typesense_client.collections['post'].documents.import_(typesense_list, {'action': 'upsert'})
 
