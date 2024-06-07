@@ -195,7 +195,7 @@ def index_new_posts(post_id_chunk: list):
             json.dump(typesense_list, f)
         return
     print('pushing to typesense')
-    result = typesense_client.collections['product'].documents.import_(typesense_list, {'action': 'create'})
+    result = typesense_client.collections['product'].documents.import_(typesense_list, {'action': 'upsert'})
     if any(not x['success'] for x in result):
         print(result)
         raise Exception('failed to index to typesense')
