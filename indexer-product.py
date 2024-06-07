@@ -179,7 +179,7 @@ def index_new_posts(post_id_chunk: list):
             "price": price,
             "prices": [price],
             "price_html": price_html,
-            "rating_count": rating_count,
+            "rating": rating_count,
             "sort_by_date": int(post_date.timestamp()),
             "tag_links": tag_link_list,
             "tags": tag_list,
@@ -195,7 +195,10 @@ def index_new_posts(post_id_chunk: list):
             json.dump(typesense_list, f)
         return
     print('pushing to typesense')
-    typesense_client.collections['product'].documents.import_(typesense_list, {'action': 'upsert'})
+    result = typesense_client.collections['product'].documents.import_(typesense_list, {'action': 'create'})
+    if any(not x['success'] for x in result):
+        print(result)
+        raise Exception('failed to index to typesense')
 
 def get_post_id():
     with open(IDS_FILE) as id_f:
