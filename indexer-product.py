@@ -23,7 +23,7 @@ dryrun = args.dryrun
 
 IDS_FILE = 'ids.txt'
 CHECKPOINT_FILE = 'checkpoint.txt'
-CHUNK_SIZE = 3000
+CHUNK_SIZE = 1000
 config = ConfigParser()
 config.read('config.ini')
 
