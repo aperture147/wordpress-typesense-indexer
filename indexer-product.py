@@ -175,14 +175,15 @@ def index_new_posts(post_id_chunk: list):
             "post_type": post_type,
             "price": price,
             "prices": [price],
-            "price_html": "",
+            "price_html": price_html,
             "rating_count": rating_count,
             "sort_by_date": int(post_date.timestamp()),
             "tag_links": tag_link_list,
             "tags": tag_list,
             "cat_link": cat_link_list,
-            "cat_links_html": cat_link_list,
-            "category": category_list
+            "cat_links_html": ", ".join(cat_link_html_list),
+            "category": category_list,
+            "total_sales": 0 # TODO
         }
         typesense_list.append(typesense_data)
     print('pushing to typesense')
