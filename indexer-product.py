@@ -190,6 +190,9 @@ def index_new_posts(post_id_chunk: list):
         }
         typesense_list.append(typesense_data)
     if dryrun:
+        import json
+        with open('demo.json', 'w') as f:
+            json.dump(typesense_list, f)
         return
     print('pushing to typesense')
     typesense_client.collections['post'].documents.import_(typesense_list, {'action': 'upsert'})
