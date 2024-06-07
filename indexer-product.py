@@ -195,7 +195,7 @@ def index_new_posts(post_id_chunk: list):
             json.dump(typesense_list, f)
         return
     print('pushing to typesense')
-    typesense_client.collections['post'].documents.import_(typesense_list, {'action': 'upsert'})
+    typesense_client.collections['product'].documents.import_(typesense_list, {'action': 'upsert'})
 
 def get_post_id():
     with open(IDS_FILE) as id_f:
