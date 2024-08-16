@@ -88,8 +88,8 @@ def index_new_posts(post_id_chunk: list):
             SELECT DISTINCT
                 p.id, p.comment_count, u.user_nicename, p.post_content,
                 p.post_date, p.post_excerpt, p.post_modified, p.post_title,
-                p.post_type, p_thumb.guid, p_thumb_m.meta_value,
-                p_category_m.meta_value
+                p.post_type, p_thumb.guid, p_thumb.post_content, p_thumb.post_content_filtered,
+                p_thumb_m.meta_value, p_category_m.meta_value
             FROM wp0e_posts AS p
             LEFT JOIN wp0e_postmeta AS pm ON pm.post_id = p.ID AND pm.meta_key = '_thumbnail_id'
             LEFT JOIN wp0e_postmeta AS p_category_m ON p_category_m.post_id = p.ID AND p_category_m.meta_key = '_primary_term_category'
@@ -105,7 +105,8 @@ def index_new_posts(post_id_chunk: list):
     for id, comment_count, post_author, \
         post_content, post_date, post_excerpt, \
         post_modified, post_title, post_type, \
-        thumb_url, thumb_meta_str, category_id_str in post_list:
+        thumb_url_1, thumb_url_2, thumb_url_3, \
+        thumb_meta_str, category_id_str in post_list:
         print('processing post', id)
         current_post_taxonomy = post_taxonomy_dict.get(id)
         category_id_list = []
@@ -147,11 +148,13 @@ def index_new_posts(post_id_chunk: list):
             tag.append(term_name)
             tag_link.append(os.path.join(wordpress_host, 'tag', term_slug))
         
+        thumb_url = thumb_url_1 or thumb_url_2 or thumb_url_3
+
         if thumb_meta_str:
             thumb_meta = loads(thumb_meta_str.encode(), decode_strings=True)
-            thumb_html = f"<img width=\"{thumb_meta.get('width', 480)}\" height=\"{thumb_meta.get('height', 480)}\" src=\"{thumb_url}\" class=\"ais-Hit-itemImage\" alt=\"{html.escape(post_title)}\" decoding=\"async\" loading=\"lazy\" />"
+            thumb_html = f"<img width=\"{thumb_meta.get('width', 720)}\" height=\"{thumb_meta.get('height', 720)}\" src=\"{thumb_url}\" class=\"ais-Hit-itemImage\" alt=\"{html.escape(post_title)}\" decoding=\"async\" loading=\"lazy\" />"
         else:
-            thumb_html = f"<img width=\"480\" height=\"480\" src=\"{thumb_url}\" class=\"ais-Hit-itemImage\" alt=\"{html.escape(post_title)}\" decoding=\"async\" loading=\"lazy\" />"
+            thumb_html = f"<img width=\"720\" height=\"720\" src=\"{thumb_url}\" class=\"ais-Hit-itemImage\" alt=\"{html.escape(post_title)}\" decoding=\"async\" loading=\"lazy\" />"
 
         if not isinstance(post_date, datetime):
             post_date = datetime.now()
