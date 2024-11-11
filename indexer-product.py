@@ -100,12 +100,27 @@ def index_new_posts(post_id_chunk: list):
         """, ('image/%', post_id_chunk, len(post_id_chunk)))
         print('post fetched')
         post_list = cur.fetchall()
-
+        
+        post_id_list = [x[0] for x in post_list]
+        
+        cur.execute("""
+            SELECT p_attr.product_id, p_attr.taxonomy, JSON_ARRAYAGG(p_term.name)
+            FROM wp_wc_product_attributes_lookup AS p_attr
+            JOIN wp_terms AS p_term ON p_attr.term_id = p_term.term_id
+            WHERE p_attr.product_id IN %s AND p_attr.taxonomy LIKE %s
+            GROUP BY p_attr.product_id, p_attr.taxonomy
+        """, (post_id_list, 'pa_%'))
+        
+        all_product_attr_dict = {}
+        for product_id, taxonomy, term_arr in cur.fetchall():
+            all_product_attr_dict.setdefault(product_id, {})[f'{taxonomy}_attribute_filter'] = term_arr
+        
     typesense_list = []
     for id, post_author, post_content, \
         post_date, post_excerpt, post_modified, \
         post_title, post_type, thumb_url, \
         product_sku, rating_count, price_str in post_list:
+        
         print('processing post', id)
         current_post_taxonomy = post_taxonomy_dict.get(id)
         price = float(price_str)
@@ -160,6 +175,8 @@ def index_new_posts(post_id_chunk: list):
             print('malformed post modified, set to current time')
         print('permalink', permalink)
         id_str = str(id)
+        p_attr_dict = all_product_attr_dict.get(id, {})
+        
         typesense_data = {
             "add_to_cart_btn": add_to_cart_btn,
             "id": id_str,
@@ -186,8 +203,9 @@ def index_new_posts(post_id_chunk: list):
             "cat_link": cat_link_list,
             "cat_links_html": ", ".join(cat_link_html_list),
             "category": category_list,
-            "total_sales": 0 # TODO
+            "total_sales": 0 # TODO,
         }
+        typesense_data.update(p_attr_dict)
         typesense_list.append(typesense_data)
     if dryrun:
         import json
