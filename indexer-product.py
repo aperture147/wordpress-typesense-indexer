@@ -8,6 +8,7 @@ from datetime import datetime
 import html
 import argparse
 import shutil
+import json
 
 parser = argparse.ArgumentParser(
     prog='Typesense Wordpress Indexer',
@@ -23,7 +24,13 @@ dryrun = args.dryrun
 
 IDS_FILE = 'ids.txt'
 CHECKPOINT_FILE = 'checkpoint.txt'
-CHUNK_SIZE = 2000
+CHUNK_SIZE = 2500
+REQUIRED_PA_FILTER_ATTR_SET = set(
+    f'pa_{x}_attribute_filter'
+    for x in ('color', 'material', 'platform', 'render', 'style', 'version')
+)
+NOW = datetime.now()
+
 config = ConfigParser()
 config.read('config.ini')
 
@@ -118,6 +125,7 @@ def index_new_posts(post_id_chunk: list):
             all_product_attr_dict.setdefault(product_id, {})[f'{taxonomy}_attribute_filter'] = term_arr
         
     typesense_list = []
+    
     for id, post_author, post_content, \
         post_date, post_excerpt, post_modified, \
         post_title, post_type, thumb_url, \
@@ -169,16 +177,19 @@ def index_new_posts(post_id_chunk: list):
         thumb_html = f"<img width=\"350\" height=\"350\" src=\"{thumb_url}\" class=\"attachment-woocommerce_thumbnail size-woocommerce_thumbnail\" alt=\"{html.escape(post_title)}\" 0=\"tsfwc-thumbnail_image\" decoding=\"async\" loading=\"lazy\" />"
         add_to_cart_btn = f"<a href=\"?add-to-cart={id}\" data-quantity=\"1\" class=\"button product_type_simple add_to_cart_button ajax_add_to_cart\" data-product_id=\"{id}\" data-product_sku=\"{product_sku}\" aria-label=\"Add to cart: &ldquo;{html.escape(post_title)}&rdquo;\" aria-describedby=\"\" rel=\"nofollow\">Add to cart</a>"
         price_html = f"<span class=\"woocommerce-Price-amount amount\"><bdi><span class=\"woocommerce-Price-currencySymbol\">&#36;</span>{'%.2f' % price}</bdi></span>"
+        
         if not isinstance(post_date, datetime):
-            post_date = datetime.now()
+            post_date = NOW
             print('malformed post date, set to current time')
         if not isinstance(post_modified, datetime):
-            post_modified = datetime.now()
-            print('malformed post modified, set to current time')
+            post_modified = NOW
+            print('malformed post modified date, set to current time')
         print('permalink', permalink)
         id_str = str(id)
         p_attr_dict = all_product_attr_dict.get(id, {})
-        
+        for k in REQUIRED_PA_FILTER_ATTR_SET:
+            if k not in p_attr_dict:
+                p_attr_dict[k] = []
         typesense_data = {
             "add_to_cart_btn": add_to_cart_btn,
             "id": id_str,
@@ -210,7 +221,7 @@ def index_new_posts(post_id_chunk: list):
         typesense_data.update(p_attr_dict)
         typesense_list.append(typesense_data)
     if dryrun:
-        import json
+        print('dryrun, no pushing to typesense, check demo.json for output')
         with open('demo.json', 'w') as f:
             json.dump(typesense_list, f)
         return
@@ -270,10 +281,12 @@ def main():
         post_id_list = get_all_posts_from_db()
     else:
         post_id_list = get_post_id()
-    print('total posts', len(post_id_list))
+    print('total posts:', len(post_id_list))
     chunk_count = math.ceil(len(post_id_list) / CHUNK_SIZE)
-    print('total chunk', chunk_count)
+    print('chunk size:', CHUNK_SIZE)
+    print('total chunks:', chunk_count)
     last_chunk = read_checkpoint()
+    
     for i in range(last_chunk, chunk_count):
         chunk = post_id_list[i * CHUNK_SIZE: (i+1) * CHUNK_SIZE]
         print('processing chunk', i)
@@ -287,7 +300,10 @@ def main():
     end_time = time()
     if os.path.isfile(CHECKPOINT_FILE):
         os.remove(CHECKPOINT_FILE)
-    print('total elapsed time', end_time - start_time, 'seconds')
+    
+    print('start time:', datetime.fromtimestamp(start_time))
+    print('end time:', datetime.fromtimestamp(end_time))
+    print('total elapsed time:', end_time - start_time, 'seconds')
 
 if __name__ == '__main__':
     try:
