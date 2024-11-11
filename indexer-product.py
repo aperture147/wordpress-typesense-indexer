@@ -40,6 +40,8 @@ db_conn = pymysql.connect(
     connect_timeout=120,
     autocommit=False
 )
+table_prefix = mysql_config['table_prefix']
+
 print('db connected')
 typesense_client = typesense.Client({
     'nodes': [{
@@ -54,10 +56,10 @@ print('typesense client created')
 def index_new_posts(post_id_chunk: list):
     
     with db_conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(f"""
             SELECT DISTINCT t.term_id, tt.term_taxonomy_id, tt.parent, t.name, t.slug, tt.taxonomy
-            FROM wp_terms AS t
-            JOIN wp_term_taxonomy AS tt ON tt.term_id = t.term_id
+            FROM {table_prefix}terms AS t
+            JOIN {table_prefix}term_taxonomy AS tt ON tt.term_id = t.term_id
         """)
         
         term_taxonomy_result = cur.fetchall()
@@ -71,9 +73,9 @@ def index_new_posts(post_id_chunk: list):
             for _, taxonomy_id, parent_id, term_name, term_slug, taxonomy_name in term_taxonomy_result
         }
         print('taxonomy adjacent list built')
-        cur.execute("""
+        cur.execute(f"""
             SELECT object_id, term_taxonomy_id
-            FROM wp_term_relationships
+            FROM {table_prefix}term_relationships
             WHERE object_id IN %s
         """, (post_id_chunk,))
         term_relationship_list = cur.fetchall()
@@ -85,17 +87,17 @@ def index_new_posts(post_id_chunk: list):
             post_taxonomy.setdefault(taxonomy_name, []).append(taxonomy_id)
         
         print('post taxonomy list built')
-        cur.execute("""
+        cur.execute(f"""
             SELECT DISTINCT
                 p.id, u.user_nicename, p.post_content,
                 p.post_date, p.post_excerpt, p.post_modified,
                 p.post_title, p.post_type, p_thumb.guid,
                 p_meta.sku, p_meta.rating_count, p_price.meta_value
-            FROM wp_posts AS p
-            LEFT JOIN wp_posts AS p_thumb ON p_thumb.post_parent = p.ID AND p_thumb.post_type = 'attachment' AND p_thumb.post_mime_type LIKE %s
-            LEFT JOIN wp_postmeta AS p_price ON p_price.post_id = p.ID AND p_price.meta_key = '_price'
-            LEFT JOIN wp_users AS u ON u.ID = p.post_author
-            LEFT JOIN wp_wc_product_meta_lookup AS p_meta ON p_meta.product_id = p.id
+            FROM {table_prefix}posts AS p
+            LEFT JOIN {table_prefix}posts AS p_thumb ON p_thumb.post_parent = p.ID AND p_thumb.post_type = 'attachment' AND p_thumb.post_mime_type LIKE %s
+            LEFT JOIN {table_prefix}postmeta AS p_price ON p_price.post_id = p.ID AND p_price.meta_key = '_price'
+            LEFT JOIN {table_prefix}users AS u ON u.ID = p.post_author
+            LEFT JOIN {table_prefix}wc_product_meta_lookup AS p_meta ON p_meta.product_id = p.id
             WHERE p.id IN %s LIMIT %s
         """, ('image/%', post_id_chunk, len(post_id_chunk)))
         print('post fetched')
@@ -103,10 +105,10 @@ def index_new_posts(post_id_chunk: list):
         
         post_id_list = [x[0] for x in post_list]
         
-        cur.execute("""
+        cur.execute(f"""
             SELECT p_attr.product_id, p_attr.taxonomy, JSON_ARRAYAGG(p_term.name)
-            FROM wp_wc_product_attributes_lookup AS p_attr
-            JOIN wp_terms AS p_term ON p_attr.term_id = p_term.term_id
+            FROM {table_prefix}wc_product_attributes_lookup AS p_attr
+            JOIN {table_prefix}terms AS p_term ON p_attr.term_id = p_term.term_id
             WHERE p_attr.product_id IN %s AND p_attr.taxonomy LIKE %s
             GROUP BY p_attr.product_id, p_attr.taxonomy
         """, (post_id_list, 'pa_%'))
@@ -249,8 +251,8 @@ def backup_id_and_checkpoint():
 def get_all_posts_from_db():
     
     with db_conn.cursor() as cur:
-        cur.execute('''
-            SELECT id FROM wp_posts
+        cur.execute(f'''
+            SELECT id FROM {table_prefix}posts
             WHERE post_status = 'publish' AND post_type = 'product'
         ''')
         result = cur.fetchall()
