@@ -122,7 +122,7 @@ def index_new_posts(post_id_chunk: list):
         
         all_product_attr_dict = {}
         for product_id, taxonomy, term_arr in cur.fetchall():
-            all_product_attr_dict.setdefault(product_id, {})[f'{taxonomy}_attribute_filter'] = term_arr
+            all_product_attr_dict.setdefault(product_id, {})[f'{taxonomy}_attribute_filter'] = json.loads(term_arr)
         
     typesense_list = []
     
@@ -286,7 +286,7 @@ def main():
     print('chunk size:', CHUNK_SIZE)
     print('total chunks:', chunk_count)
     last_chunk = read_checkpoint()
-    
+
     for i in range(last_chunk, chunk_count):
         chunk = post_id_list[i * CHUNK_SIZE: (i+1) * CHUNK_SIZE]
         print('processing chunk', i)
